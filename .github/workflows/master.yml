@@ -1,0 +1,56 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Generate proto code and upload artifact
+
+# Controls when the action will run. 
+on:
+  # Triggers the workflow on push or pull request events but only for the main branch
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2.3.4
+      - uses: actions/setup-go@v2
+      - name: Install prerequisits
+        run: |
+          sudo apt install protobuf-compiler
+          go get github.com/golang/protobuf/protoc-gen-go
+          
+      - name: Create folder structure
+        run: |
+            mkdir generated
+            mkdir generated/cs_autogen
+            mkdir generated/cpp_autogen
+            mkdir generated/python_autogen
+            mkdir generated/java_autogen
+            mkdir generated/go_autogen
+            mkdir generated/ruby_autogen
+      - name: Generate code
+        run: |
+          protoc -I=. --csharp_out=generated/cs_autogen open_vector_format.proto
+          protoc -I=. --cpp_out=generated/cpp_autogen open_vector_format.proto
+          protoc -I=. --plugin=protoc-gen-go=/home/runner/go/bin/protoc-gen-go --go_out=generated/go_autogen open_vector_format.proto
+          protoc -I=. --java_out=generated/java_autogen open_vector_format.proto
+          protoc -I=. --python_out=generated/python_autogen open_vector_format.proto
+      - name: Upload
+        uses: actions/upload-artifact@v2
+        with:
+          name: generated_code
+          path: generated/
+            
+
+
