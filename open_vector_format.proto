@@ -1,0 +1,453 @@
+// MIT License
+// 
+// Copyright (c) 2020 Digital-Production-Aachen
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+syntax = "proto3";
+package open_vector_format;
+
+//Represents one single production job. May be used as a central (very) large object containing
+//all information, or as a "shell" with no or incomplete WorkPlane information to break down object size.
+message Job {
+  repeated WorkPlane work_planes = 1;
+  JobMetaData job_meta_data = 2;
+  map<int32,MarkingParams> marking_params_map = 3;
+  map<int32,Part> parts_map = 4;
+  JobParameters job_parameters = 5;
+  
+  //Number of Layer (LPBF) /3DPatches (Structuring)
+  int32 num_work_planes =  6;
+
+  //Metadata: Represents metadata related to the job object itself
+  message JobMetaData {
+    //jobCreationTime in UNIX time (number of seconds since January 1, 1970 12:00am UTC)
+    int64 job_creation_time = 1;
+    uint64 version = 2;
+    string job_name = 3;
+    string author = 4;
+    string description = 5;
+  }
+}
+
+//Process parameters applying to the job as a whole
+message JobParameters {
+  //setpoint temperature of a globally effective heating system (e.g. build chamber/substrate plate)
+  double preheating_temperatur_in_dg_c = 1;
+  //vector of main direction of a shielding gas flow (xy or xyz)
+  repeated double shielding_gas_directions = 2;
+  //vector of main direction of a material feed (e.g. powder coater, powder feed, extrusion nozzle) (xy or xyz)
+  repeated double material_feed_directions = 3;
+}
+
+//Parameters controlling the tool (e.g. laser beam) behaviour
+message MarkingParams {
+  float laser_power_in_w = 1;
+  float laser_speed_in_mm_per_s = 2;
+  float laser_focus_shift_in_mm = 3;
+  float point_exposure_time_in_us = 4;
+
+  float jump_speed_in_mm_s = 5;
+  
+  //gives the number of exposure cycles executed
+  //applies for points only, for movement distance and speed implicitly define this
+  float point_exposure_repetitions = 6;
+  //repition rate of the exposure cycle, e.g. pulses/bursts etc. per second
+  //0 Hz is defined as continous wave (cw)
+  uint64 repetition_rate_in_hz = 7;
+  //for burst mode, number of pulses per burst
+  //0 is defined as no burst mode
+  //pulses in the burst are reapeated with oscillator frequency, pulseDurationInFemtoseconds applies to each pulse
+  uint64 laser_pulses_per_burst = 8;
+  //length of one pulse, defines the duty cycle together with repetitionRateInHz and laserPowerInW
+  uint64 pulseDurationInFemtoseconds = 9;
+
+  //marking mode switches between normal marking and skywriting modes
+  MarkingMode marking_mode = 10;
+
+  //Parameters for marking without Skywriting
+  float jump_delay_in_us = 11;
+  float laser_off_delay_in_us = 12;
+  float laser_on_delay_in_us = 13;
+  float mark_delay_in_us = 14;
+  float polygon_delay_in_us = 15;
+
+  //Parameters for marking with Skywriting
+  float time_lag_in_us = 16;
+  float laser_on_shift_in_us = 17;
+  float limit = 18;
+  float n_prev_in_us = 19;
+  float n_post_in_us = 20;
+
+  //Parameters for marking with Wobble
+  float wob_frequency_in_hz = 21;
+  float wob_amp_long_in_mm = 22;
+  float wob_amp_trans_in_mm = 23;
+  WobbleMode wobble_mode = 24;
+
+  enum MarkingMode {
+    NO_SKY = 0;
+    //Skywriting modes 1-3
+    SKY_1 = 1;
+    SKY_2 = 2;
+    SKY_3 = 3;
+  }
+
+  enum WobbleMode {
+    NO_WOBBLE = 0;
+    //ellipse-shape wobble movement perpendicular to the current movement direction
+    ELLIPSE_WOBBLE = 1;
+    //8-shape wobble movement perpendicular to the current movement direction
+    STANDING_EIGHT_WOBBLE = 2;
+    //8-shape wobble movement parallel to the current movement direction
+    LYING_EIGHT_WOBBLE = 3;
+  }
+}
+
+//Part is a reference to the CAD 3D model.
+message Part {
+  string name = 1;
+  GeometryInfo geometry_info = 2;
+  Material material = 3;
+  ProcessStrategy process_strategy = 4;
+  
+  //Metadata related to the geometry of the part
+  message GeometryInfo {
+    //part volume in cubic millimeters
+    double volume_in_mm3 = 1;
+    //support volume in cubic millimeters
+    double support_volume_in_mm3 = 2;
+    //height (layer) of the top slice in millimeters
+    double build_height_in_mm = 3;
+    //surface area of the 3D model in square millimeters
+    double surface_area_in_mm2 = 4;
+    //surface area projected on the biuld plate in square millimeters
+    double projected_surface_in_mm2 = 5;
+  }
+
+  message Material {
+    uint64 id = 1;
+    string name = 2;
+  }
+
+  //Metadata: parameters the job preprocessing program (e.g. Slicer, CAM) used to create the vector data
+  message ProcessStrategy {
+    //universal, vendor independent parameters
+
+    //start rotation angle of scan patches or layers
+    float rot_angle_in_deg = 1;
+    //Angle increment of scan patches from layer to layer
+    float increment_angle_in_deg = 2;
+    //Shift of patches from layer to layer
+    float shift_in_mm = 3;
+    //Extension of patche in to each other
+    float extend_into_in_mm = 4;
+    //thickness of a layer/workplane
+    float layer_thickness_in_mm = 5;
+    //distance between single material tracks
+    float hatch_distance_in_mm = 6;
+    //distance between contour and filling
+    float hatch_contour_distance_in_mm = 7;
+    //critical angle that is considered as overhang
+    float overhang_angle_in_deg = 8;
+
+    //proprietary parameters, vendor specific
+
+    repeated ProprietaryParam additional_parameters = 100;
+
+    //generic definition of proprietary parameters descriptor
+    message ProprietaryParam{
+      string param_name = 1;
+      double param_value = 2;
+    }
+  }
+}
+
+//A WorkingPlane is a 2D working plane of the tool (e.g. laser scanfield, electron beam scan field)
+//in the global 3D coordinate system that is set by moving one or more physical axis relative to the workpiece.
+//It follows the same concept as a sketch plane in CAD applications.
+//Any axis movement that changes the work plane position will require a new WorkingPlane message.
+//synonyms: Layer (LPBF) / 3DPatches (Structuring) / Scanfields (MultiBeam)
+message WorkPlane {
+  repeated VectorBlock vector_blocks = 1;
+  // Axis positions - can be used for tiling
+  float x_pos_in_mm = 2;
+  float y_pos_in_mm = 3;
+  // for PBF processes bed position
+  float z_pos_in_mm = 4;
+  
+  float x_rot_in_deg = 5;
+  float y_rot_in_deg = 6;
+  float z_rot_in_deg = 7;
+  
+  int32 num_blocks = 8;
+
+  //how many times the WorkPlane will be executed
+  //this will execute all vector blocks in order once, then repeat [repeats] times starting with the first block again etc.
+  uint32 repeats = 9;
+  //reference for syncing or asynchronious execution (keeping correct order)
+  int32 work_plane_number = 10;
+
+  //machine specific information for directly controlling additional axis
+  //that don't work in the main coordinate system
+  //the exact machine type has to be known for this during job preparation
+
+  //identifier of the machine to prevent type mismatch, has to be verified by the machine controller
+  string machine_type = 11;
+  //goal positions of the axis in order of machine axis number
+  repeated float additional_axis_positions = 12;
+  
+  WorkPlaneMetaData meta_data = 13;
+
+  //optional metadata of this work plane
+  message WorkPlaneMetaData {
+    //total scan distance of this WorkPlane in mm
+    double total_scan_distance_in_mm = 1;
+    //total scan distance of this WorkPlane in mm
+    double total_jump_distance_in_mm = 2;
+    //map containing all patches in this workplane
+    map<int32,Patch> patches_map = 3;
+  }
+  
+  //A patch is a subdivision in a workPlane with an own local coordinate system.
+  //The local transformation is given by the 2D origin (u/v)
+  //Coordinates in the workplane may be tranformed by the machine depending on the patch
+  message Patch {
+    //optional 2D polygon that forms the outer contour (not marked) of this patch
+    //if the contour should get executed a separate vector block is used.
+    VectorBlock.LineSequence outer_contour = 1;
+    //local transformation of workpiece coordinate x
+    float u = 2;
+    //local transformation of workpiece coordinate y
+    float v = 3;
+    //identifier of actual workpiece layer / stack
+    //for single patch processes like powder bed this equals the workPlane number
+    int32 layer_id = 4;
+  }
+}
+
+message VectorBlock {
+  oneof vector_data {
+    LineSequence line_sequence = 1;
+    Hatches _hatches = 2;
+    PointSequence point_sequence = 3;
+    Arcs _arcs = 4;
+    Ellipses ellipses = 5;
+    LineSequence3D line_sequence_3d = 6;
+    Hatches3D hatches_3d = 7;
+    PointSequence3D point_sequence_3d = 8;
+    Arcs3D arcs_3d = 9;
+    ExposurePause exposure_pause = 10;
+    LineSequenceParaAdapt line_sequence_para_adapt = 11;
+  }
+
+  //key used in Job/markingParamsMap
+  int32 marking_params_key = 50;
+
+  //LaserIndex is used for assigning vectorBlocks to different actors, e.g. in multi scanner systems
+  int32 laser_index = 53;
+
+  //vetor blocks are executed in order once by default (repeats = 0),
+  //then repeated [repeats] times starting with the first vector again etc.
+  uint64 repeats = 54;
+  
+  VectorBlockMetaData meta_data = 100;
+  oneof process_meta_data {
+    LPBFMetadata lpbf_metadata = 101;
+    MicroStructuringMetadata micro_structuring_metadata = 102;
+    PolishingMetadata polishing_metadata = 103;
+  }
+
+  message VectorBlockMetaData{
+    //total scan distance of this vector block in mm
+    double total_scan_distance_in_mm = 1;
+    //total scan distance of this vector block in mm
+    double total_jump_distance_in_mm = 2;
+    //key used in Job/partsMap
+    int32 part_key = 3;
+    //key used in Job/Workplane/patchesMap
+    int32 patch_key = 4;
+  }
+  
+  // ProcessMetaData for LPBF 
+  message LPBFMetadata {
+    PartArea part_area = 1;
+    SkinType skin_type = 2;
+    SkinCoreStrategyArea skin_core_strategy_area = 3;
+    StructureType structure_type = 4;
+    //states if this vector block is a reexposure of the area (true) or the first exposure (false)
+    bool reexposure = 5;
+
+    //SkinType defines if the vectors of this block belong to the parts surface in vertical direction
+    //InSkin (default), vectors are found on this position on previous and next layer
+    //DownSkin,  no vectors in previous layer, exposure in powder bed
+    //Upskin, no vectors in next layer
+    enum SkinType {
+      IN_SKIN = 0;
+      DOWN_SKIN = 1;
+      UP_SKIN = 2;
+    }
+  
+    //Skin Core strategy uses two laser spots with different sizes for core (bigger spot)
+    //and outer hull (smaller spot) to increase productivity. Default value 
+    //(also for not using the strategy) is OuterHull, using the small spot for the whole part.
+    enum SkinCoreStrategyArea {
+      OUTER_HULL = 0;
+      CORE = 1;
+      INBETWEEN_HULL = 2;
+    }
+  }
+
+  //ProcessMetaData for MicroStructuring
+  message MicroStructuringMetadata { 
+    PartArea part_area = 1;
+    StructureType structure_type = 2;
+  }
+
+  //ProcessMetaData for Polishing
+  message PolishingMetadata { 
+    // Todo: Define
+  }
+  
+  //PartArea defines if the vectors belong to a part surface in horizontal direction (in layer).
+  //Contours are borders of the part in the layer, volume (or core) is the area inbetween.
+  //Transition contours are special additional contour lines connecting volume and contour.
+  enum PartArea {
+    //also called core or hatches
+    VOLUME = 0;
+    CONTOUR = 1;
+    TRANSITION_CONTOUR = 2;
+  }
+
+  //StructureType defines the type of structure model the vectors belong to.
+  //PART is default, usually refering to a tesselated model, e.g. STL models.
+  //Support structures don't belong to any part, but are needed for the process.
+  //Wirestructures can be tesselated. But it is more efficient to treat them seperatly in a 
+  //parametrized format. They are similar to supports, but are not removed after the process.
+  //Points use is very limited. They may form a support or wirestructure.
+  enum StructureType {
+    PART = 0;
+    SUPPORT = 1;
+    WIRESTRUCTURE = 2;
+    POINTS = 3;
+  }
+
+  //LineSequence:
+  //A lineSequence is defined by a set of vertex points (x,y), 
+  //connected contiguously in the listed order by straight line segments.
+  //A closed lineSequence can also be called a polygon.
+  message LineSequence {
+    repeated float points = 1;
+  }
+
+  //LineSequence3D:
+  //A lineSequence3D is defined by a set of vertex points (x,y,z) in 3D space, 
+  //connected contiguously in the listed order by straight line segments.
+  //A closed lineSequence can also be called a polygon.
+  message LineSequence3D {
+    repeated float points = 1;
+  }
+
+  //Hatches:
+  //A hatch is a set of independent straight lines,
+  //each defined by one start and one end point (x,y) for 2D.
+  message Hatches {
+    repeated float points = 1;
+  }
+
+  //Hatches3D:
+  //A hatch is a set of independent straight lines,
+  //each defined by one start and one end point (x,y,z) for 3D.
+  message Hatches3D {
+    repeated float points = 1;
+  }
+
+  //PointSequence:
+  //A point sequence is a set of points, each marked
+  //for a fixed period of time. Each point consists of (x,y) for 2D.
+  message PointSequence {
+    repeated float points = 1;
+  }
+
+  //PointSequence3D:
+  //A point sequence is a set of points, each marked
+  //for a fixed period of time. Each point consists of (x,y,z) for 3D.
+  message PointSequence3D {
+    repeated float points = 1;
+  }
+
+  //An arc is defined by a start point on the circle,
+  //defined in relative cartesian coordinates to the center,
+  //a center point and an arc angle (degrees). Positive angles mean clockwise,
+  //negative counter-clockwise rotation.
+  //Multiple same radius/angle arcs are defined with repeated center coordinates (x,y).
+  message Arcs {
+    double angle = 1;
+    float start_dx = 2;
+    float start_dy = 3;
+    repeated float centers = 4;
+  }
+
+  //An arc3D (edge of a plate) is defined by a start point on the circle,
+  //defined in relative cartesian coordinates to the center,
+  //a center point and an arc angle (degrees). Positive angles mean clockwise,
+  //negative counter-clockwise rotation.
+  //Multiple same radius/angle arcs are defined with repeated center coordinates (x,y,z) for 3D.
+  message Arcs3D {
+    double angle = 1;
+    float start_dx = 2;
+    float start_dy = 3;
+    float start_dz = 4;
+    repeated float centers = 5;
+  }
+
+  //An ellipse is defined like an arc, with additional parameters
+  //defining the ellipse shape: a/b length of ellipse half axis
+  //phi0 phase zero angle (start point of ellipse relative to end of a)
+  message Ellipses {
+    float a = 1;
+    float b = 2;
+    double phi0 = 3;
+    Arcs ellipses_arcs = 4;
+  }
+
+  //Pause the exposure procedure. This can be necessary e.g. for thermal reasons,
+  //or for syncing mulitple laser scanner units, preventing overlap or smoke interaction.
+  message ExposurePause {
+    uint64 pause_in_us = 1;
+  }
+
+  //A LineSequence with additional adaption of one laser parameter along the vectors.
+  //Each point consists of (x,y,parameterValue) for 2D.
+  //The parameterValue is the goal value that will be reached at the end of the vector,
+  //scaling linear along the vector. The goal gets priority and overwrites settings of the
+  //parameter set.
+  message LineSequenceParaAdapt {
+    repeated float points_with_paras = 1;
+  
+    AdaptedParameter parameter = 2;
+    enum AdaptedParameter {
+      LASER_POWER_IN_W = 0;
+      LASER_FOCUS_SHIFT_IN_MM = 1;
+      //for Q-Switch only
+      LASER_PULSE_LENGTH_IN_US = 2;
+      LASER_PULSE_REPITION_RATE_IN_HZ = 3;
+    }
+  }
+}
