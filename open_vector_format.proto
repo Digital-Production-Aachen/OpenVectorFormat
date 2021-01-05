@@ -23,6 +23,9 @@
 syntax = "proto3";
 package open_vector_format;
 
+//all coordinate units are millimeters
+//all fields are optional
+
 //Represents one single production job. May be used as a central (very) large object containing
 //all information, or as a "shell" with no or incomplete WorkPlane information to break down object size.
 message Job {
@@ -100,6 +103,8 @@ message MarkingParams {
   float wob_amp_long_in_mm = 22;
   float wob_amp_trans_in_mm = 23;
   WobbleMode wobble_mode = 24;
+  
+  PowerGradientParams powerGradient = 25;
 
   enum MarkingMode {
     NO_SKY = 0;
@@ -118,6 +123,12 @@ message MarkingParams {
     //8-shape wobble movement parallel to the current movement direction
     LYING_EIGHT_WOBBLE = 3;
   }
+}
+
+message PowerGradientParams
+{
+  float minPowerInW = 1;
+  float gradientInWPerS = 2;
 }
 
 //Part is a reference to the CAD 3D model.
@@ -223,6 +234,10 @@ message WorkPlane {
     double total_jump_distance_in_mm = 2;
     //map containing all patches in this workplane
     map<int32,Patch> patches_map = 3;
+    //actually applied max laser power after dynamic parameter allocation in this workPlane
+    float maxPower = 4;
+    //actually applied min laser power after dynamic parameter allocation in this workPlane
+    float minPower = 5;
   }
   
   //A patch is a subdivision in a workPlane with an own local coordinate system.
@@ -255,6 +270,7 @@ message VectorBlock {
     Arcs3D arcs_3d = 9;
     ExposurePause exposure_pause = 10;
     LineSequenceParaAdapt line_sequence_para_adapt = 11;
+    HatchesParaAdapt _hatchParaAdapt = 12;
   }
 
   //key used in Job/markingParamsMap
@@ -283,6 +299,9 @@ message VectorBlock {
     int32 part_key = 3;
     //key used in Job/Workplane/patchesMap
     int32 patch_key = 4;
+    //index of the contour. Contours shall be enumerated ascending in each workplane to identifiy
+    //physical contours consisting of multiple vector blocks (e.g. when parameters change) as one
+    int32 contour_index = 5;
   }
   
   // ProcessMetaData for LPBF 
@@ -449,5 +468,10 @@ message VectorBlock {
       LASER_PULSE_LENGTH_IN_US = 2;
       LASER_PULSE_REPITION_RATE_IN_HZ = 3;
     }
+  }
+  
+  //A hatch divided into a line sequence with adaption parameter
+  message HatchesParaAdapt {
+    repeated LineSequenceParaAdapt hatchAsLinesequence = 1;
   }
 }
