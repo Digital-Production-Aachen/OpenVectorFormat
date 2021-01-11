@@ -182,8 +182,10 @@ message Part {
     float contour_offset_in_mm = 9;
     //number of generated contours. If <= 0, there will only be hatches.
     int32 number_of_contours = 10;
+    //distance inbetween multiple contour lines. Only takes effect if number_of_contours > 1.
+    float contour_distance_in_mm = 11;
     //pattern type of the hatches that fill the contours
-    HatchingPattern hatching_pattern = 11;
+    HatchingPattern hatching_pattern = 12;
 
     //proprietary parameters, vendor specific
 
