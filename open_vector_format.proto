@@ -181,7 +181,7 @@ message Part {
     //often reffered to as "beam compensation" as well
     float contour_offset_in_mm = 9;
     //number of generated contours. If <= 0, there will only be hatches.
-    float number_of_contours = 10;
+    int32 number_of_contours = 10;
     //pattern type of the hatches that fill the contours
     HatchingPattern hatching_pattern = 11;
 
