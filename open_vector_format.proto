@@ -167,7 +167,7 @@ message Part {
     float increment_angle_in_deg = 2;
     //Shift of patches from layer to layer
     float shift_in_mm = 3;
-    //Extension of patche in to each other
+    //Extension of patches in to each other
     float extend_into_in_mm = 4;
     //thickness of a layer/workplane
     float layer_thickness_in_mm = 5;
@@ -177,6 +177,15 @@ message Part {
     float hatch_contour_distance_in_mm = 7;
     //critical angle that is considered as overhang
     float overhang_angle_in_deg = 8;
+    //offset of the first contour relative to the computed contour of the geometry.
+    //often reffered to as "beam compensation" as well
+    float contour_offset_in_mm = 9;
+    //number of generated contours. If <= 0, there will only be hatches.
+    int32 number_of_contours = 10;
+    //distance inbetween multiple contour lines. Only takes effect if number_of_contours > 1.
+    float contour_distance_in_mm = 11;
+    //pattern type of the hatches that fill the contours
+    HatchingPattern hatching_pattern = 12;
 
     //proprietary parameters, vendor specific
 
@@ -186,6 +195,16 @@ message Part {
     message ProprietaryParam{
       string param_name = 1;
       double param_value = 2;
+      string param_description = 3;
+    }
+
+    enum HatchingPattern{
+      //hatch lines follow the same direction. Long jumps are executed back to the start after each line.
+      UNIDIRECTIONAL = 0;
+      //hatch lines alternate directions with short jumps in between
+      BIDIRECTIONAL = 1;
+      //hatches are seperated into groups with perpendicular direction following a checkerboard pattern
+      CHECKERBOARD = 2;
     }
   }
 }
