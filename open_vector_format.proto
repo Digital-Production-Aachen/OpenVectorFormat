@@ -22,7 +22,7 @@
 
 syntax = "proto3";
 package open_vector_format;
-
+option go_package = "github.com/digital-production-aachen/openvectorformat/proto";
 //all coordinate units are millimeters
 //all fields are optional
 
