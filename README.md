@@ -19,7 +19,7 @@ Currently, various formats are used:
 Nearly all of the formats lack the capability to store meta-data about parts and processing steps, which is required to associate process monitoring information with specific steps of the processing job. 
 
 This is exactly the point where OpenVectorFormat plugs into the data pipeline.
-![OVF in data pipeline](resources/where_to_use.png)
+![OVF in data pipeline](resources/where_to_use.svg)
 
 Thus, we are confident that the OpenVectorFormat will not be "just another format" alongside other, similarily well suited formats. It is the first truly open, feature rich format for the growing range of scanner based laser applications.
 
@@ -27,7 +27,7 @@ Thus, we are confident that the OpenVectorFormat will not be "just another forma
 
 The basic object model of the Open Vector Format is derived from the layer wise build up process of 2.5D manufacturing processes and shown in the figure below.
 
-![alt text](resources/ovf_structure_overview.png)
+![alt text](resources/ovf_structure_overview.svg)
 
 ### Job
 
@@ -54,7 +54,7 @@ If a specialized vector block type is beneficial for a use case, both the vector
 
 Additionally for multi-laser machines each vector block can store an index of the executing laser unit if the vector allocation is generated upfront and not on the machine.
 
-![VectorBlock Types](resources/ovf_blocks.png)
+![VectorBlock Types](resources/ovf_blocks.svg)
 
 ### Marking Params
 
