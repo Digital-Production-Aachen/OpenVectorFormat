@@ -264,6 +264,10 @@ message WorkPlane {
       //sections are necessary to indicate parameter set changes along the contour
       //with this meta data reconstruction of original contours is possible
       repeated int32 contour_section_vector_block_indices = 1;
+      //this closed contours area in square millimeters
+      float area_in_mm_2 = 2;
+      //this closed contours total length in millimeters
+      float length_in_mm = 3;
     }
   }
   
