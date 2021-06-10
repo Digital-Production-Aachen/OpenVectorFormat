@@ -257,6 +257,14 @@ message WorkPlane {
     float maxPower = 4;
     //actually applied min laser power after dynamic parameter allocation in this workPlane
     float minPower = 5;
+    //all closed contours present in this workplane
+    repeated closedContour contours = 6;
+    message closedContour {
+      //indices of the vector blocks in vector_blocks repeated field that represent different sections of one closed contour
+      //sections are necessary to indicate parameter set changes along the contour
+      //with this meta data reconstruction of original contours is possible
+      repeated int32 contour_section_vector_block_indices = 1;
+    }
   }
   
   //A patch is a subdivision in a workPlane with an own local coordinate system.
