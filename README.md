@@ -2,6 +2,8 @@
 
 A format description based on Google protobuf. The format is used for controlling a laser in combination with a galvanometer scanner. It supports multi scanfield arrays as well as additional machine axis controls.
 
+If you are just looking for a "How to use", please scroll to the last section of the readme!
+
 ## Why another format?
 
 The first question to adress is for course: why another format? Often, the introduction of a new format to "unify all the existing ones" leads to a situation of there just being yet another format, as beautifully shown in this [xkcd](https://xkcd.com/927/).
