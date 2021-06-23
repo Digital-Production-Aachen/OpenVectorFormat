@@ -80,7 +80,7 @@ The recommended way to use OpenVectorFormat in your software is to use our refer
 If you prefer not to use those tools, you can either use the [Workspace](WORKSPACE) file to pull & build standalone versions of the Protobuf & gRPC libraries in your `bazel` workflow. Or just take the [open_vector_format.proto](open_vector_format.proto) file directly. In this case, you should be knowing what you are doing since you need to integrate the protobuf and gRPC libraries manually into your software.
 
 # OVF File Structure
-Since the protobuf messages itself just describe a data format, but not a file format, some addiational steps are required to read / write jobs from and to files. As mentioned in the "How to use" section above, the recommendation is to use the [reference implementation for readers and writers](https://github.com/Digital-Production-Aachen/OpenVectorFormatTools/tree/main/ReaderWriter) whenever possible. 
+Since the protobuf messages itself just describe a data format, but not a file format, some additional steps are required to read / write jobs from and to files. As mentioned in the "How to use" section above, the recommendation is to use the [reference implementation for readers and writers](https://github.com/Digital-Production-Aachen/OpenVectorFormatTools/tree/main/ReaderWriter) whenever possible. 
 
 To enable selective streaming of various elements of a job from the file, the Job protobuf message cannot simply be seriallized and dumped to a file. Instead, the job is seriallized in parts and the position of the parts is indicated by look-up-tables (LUTs).
 
