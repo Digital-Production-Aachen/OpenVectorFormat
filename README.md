@@ -2,7 +2,7 @@
 
 A format description based on Google protobuf. The format is used for controlling a laser in combination with a galvanometer scanner. It supports multi scanfield arrays as well as additional machine axis controls.
 
-**Just looking for a "How to use?" --> [Here you go!](README.md#ovf-file-structure)**
+**Just looking for a "How to use?" --> [Here you go!](README.md#how-to-use)**
 
 ## Why another format?
 
