@@ -6,7 +6,7 @@ A format description based on Google protobuf. The format is used for controllin
 
 ## Why another format?
 
-The first question to adress is for course: why another format? Often, the introduction of a new format to "unify all the existing ones" leads to a situation of there just being yet another format, as beautifully shown in this [xkcd](https://xkcd.com/927/).
+The first question to adress is of course: why another format? Often, the introduction of a new format to "unify all the existing ones" leads to a situation of there just being yet another format, as beautifully shown in this [xkcd](https://xkcd.com/927/).
 
 ### Status quo
 In scanner-based laser manufacturing, a process chain typically starts with the generation of the structure to be processed in some CAD application, where there are several formats such as STEP (STandard for the Exchange of Product model data) or STL (Standard Tessellation Language) that can be used in a wide variety of tools - thus, a favorable situation of two very capable, widely supported de-facto standards.
