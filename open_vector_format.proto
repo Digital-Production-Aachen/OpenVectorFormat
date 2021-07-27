@@ -105,6 +105,8 @@ message MarkingParams {
   WobbleMode wobble_mode = 24;
   
   PowerGradientParams powerGradient = 25;
+  //meta data: custom, human readable name of this marking parameter set
+  string name = 26;
 
   enum MarkingMode {
     NO_SKY = 0;
@@ -187,6 +189,9 @@ message Part {
     //pattern type of the hatches that fill the contours
     HatchingPattern hatching_pattern = 12;
 
+    //meta data: custom, human readable name of this process strategy
+    string name = 90;
+    
     //proprietary parameters, vendor specific
 
     repeated ProprietaryParam additional_parameters = 100;
