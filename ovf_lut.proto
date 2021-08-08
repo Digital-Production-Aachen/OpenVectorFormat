@@ -22,6 +22,7 @@
 
 syntax = "proto3";
 package OpenVectorFormat;
+option go_package = "github.com/digital-production-aachen/openvectorformat/proto";
 
 // positions are 64bit values in bytes
 // only Int64 and not UInt64 because the length of a filestream is given bei Int64 (long) in C#.
