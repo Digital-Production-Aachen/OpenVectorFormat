@@ -21,7 +21,7 @@
 // SOFTWARE.
 
 syntax = "proto3";
-package OpenVectorFormat;
+package open_vector_format;
 option go_package = "github.com/digital-production-aachen/openvectorformat/proto";
 
 // positions are 64bit values in bytes
