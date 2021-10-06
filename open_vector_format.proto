@@ -198,6 +198,11 @@ message Part {
     int32 number_of_contours = 10;
     //distance inbetween multiple contour lines. Only takes effect if number_of_contours > 1.
     float contour_distance_in_mm = 11;
+    
+    //meta data defining the exposure order that was used to order the vector blocks of this part
+    //the first item gets exposed first, e.g. exposure starts with downskin hatches, followed by inskin hatches
+    //two LPBFMetadata objects are added with PartArea set to VOLUME in both, SkinType set to DOWN_SKIN in first and IN_SKIN in second
+    repeated LPBFMetadata exposure_order = 50;
 
     //meta data: custom, human readable name of this process strategy
     string name = 90;
