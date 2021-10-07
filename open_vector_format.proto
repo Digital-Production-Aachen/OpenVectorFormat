@@ -138,7 +138,17 @@ message Part {
   string name = 1;
   GeometryInfo geometry_info = 2;
   Material material = 3;
+  //process strategy used for the in skin (volume) of the part
   ProcessStrategy process_strategy = 4;
+  //process strategy used for the down skin of the part, if differing
+  ProcessStrategy up_skin_process_strategy = 5;
+  //process strategy used for the up skin of the part, if differing
+  ProcessStrategy down_skin_process_strategy = 6;
+  
+  //meta data defining the exposure order that was used to order the vector blocks of this part
+  //the first item gets exposed first, e.g. exposure starts with downskin hatches, followed by inskin hatches
+  //two LPBFMetadata objects are added with PartArea set to VOLUME in both, SkinType set to DOWN_SKIN in first and IN_SKIN in second
+  repeated VectorBlock.LPBFMetadata exposure_order = 7;
   
   //Metadata related to the geometry of the part
   message GeometryInfo {
@@ -161,16 +171,23 @@ message Part {
 
   //Metadata: parameters the job preprocessing program (e.g. Slicer, CAM) used to create the vector data
   message ProcessStrategy {
-    //universal, vendor independent parameters
-
+     //universal, vendor independent parameters
+     
     //start rotation angle of scan patches or layers
     float rot_angle_in_deg = 1;
     //Angle increment of scan patches from layer to layer
     float increment_angle_in_deg = 2;
-    //Shift of patches from layer to layer
+    //Shift of patches in the pattern from layer to layer
     float shift_in_mm = 3;
-    //Extension of patches in to each other
+    //Extension of patches in to each other. Synonym: overlap distance
     float extend_into_in_mm = 4;
+    //maximum length of hatches when applying a pattern. Values <= 0 result in no limitation.
+    //for stripes and checkerboard this controls the size of the groups/patches
+    //for single tracks (uni- or bidirectional) this does not apply
+    float pattern_hatch_length_in_mm = 13;
+    //pattern type of the hatches that fill the contours
+    HatchingPattern hatching_pattern = 12;
+    
     //thickness of a layer/workplane
     float layer_thickness_in_mm = 5;
     //distance between single material tracks
@@ -186,13 +203,11 @@ message Part {
     int32 number_of_contours = 10;
     //distance inbetween multiple contour lines. Only takes effect if number_of_contours > 1.
     float contour_distance_in_mm = 11;
-    //pattern type of the hatches that fill the contours
-    HatchingPattern hatching_pattern = 12;
 
     //meta data: custom, human readable name of this process strategy
     string name = 90;
     
-    //proprietary parameters, vendor specific
+     //proprietary parameters, vendor specific
 
     repeated ProprietaryParam additional_parameters = 100;
 
@@ -204,12 +219,18 @@ message Part {
     }
 
     enum HatchingPattern{
-      //hatch lines follow the same direction. Long jumps are executed back to the start after each line.
+      //single hatch lines that follow the same direction. Long jumps are executed back to the start after each line.
       UNIDIRECTIONAL = 0;
-      //hatch lines alternate directions with short jumps in between
+      //single hatch lines that alternate directions with short jumps in between
       BIDIRECTIONAL = 1;
-      //hatches are seperated into groups with perpendicular direction following a checkerboard pattern
+      //hatches are seperated into patches with perpendicular direction following a checkerboard pattern
+      //size of each patch is quadratic pattern_hatch_length_in_mm times pattern_hatch_length_in_mm
+      //patch overlap (size of area with two patches) is of size extend_into_in_mm
       CHECKERBOARD = 2;
+      //hatches are seperated into patches ("stripes"), but opposed to checkerboard only in one direction perpendicular to the marking direction
+      //size of each patch is pattern_hatch_length_in_mm in marking direction, unrestricted perpendicular to the marking direction
+      //patch overlap (size of area with two patches) is of size extend_into_in_mm
+      STRIPES = 3;
     }
   }
 }
@@ -273,6 +294,12 @@ message WorkPlane {
       float area_in_mm_2 = 2;
       //this closed contours total length in millimeters
       float length_in_mm = 3;
+      //index of the parent (containing) contour in this workplanes' repeated contours field
+      //if the parent index points to the contour itself, it is one outermost contour
+      int32 parent_index = 5;
+      //defines inner/outer contours by specifying the winding number of the contour.
+      //for standard slices, a winding number of 1 indicates an outer contour while 0 indicates an inner contour.
+      int32 winding_number = 6;
     }
   }
   
