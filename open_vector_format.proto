@@ -297,9 +297,28 @@ message WorkPlane {
       //index of the parent (containing) contour in this workplanes' repeated contours field
       //if the parent index points to the contour itself, it is one outermost contour
       int32 parent_index = 5;
-      //defines inner/outer contours by specifying the winding number of the contour.
-      //for standard slices, a winding number of 1 indicates an outer contour while 0 indicates an inner contour.
+      //defines the winding number of the contour around the contours centroid
+      //also indicateing its direction: negative = clockwise / positive = counterclockwise
       int32 winding_number = 6;
+      
+      //indicates the ContourType of this contour
+      ContourType type = 7;
+      enum ContourType {
+        //an outer contour of the unprocessed part slice
+        //for non overlapping contour groups, outer an inner contours always alternate
+        //the hierarchy of the contours is stored in parent_index instead
+        PART_OUTER_CONTOUR = 0;
+        //an inner contour of the unprocessed part slice
+        //for non overlapping contour groups, outer an inner contours always alternate
+        //the hierarchy of the contours is stored in parent_index instead
+        PART_INNER_CONTOUR = 1;
+        //an additional contour that has been offset from a contour of the unprocessed part slice
+        //e.g. because number_of_contours > 1 in the part process strategy
+        //these contours are not part of the unprocessed part slices contour hierarchy
+        //they instead are offset to their parent contour indicated by parent_index
+        //and typically are used to weld the parent contour to the hatches
+        OFFSET_CONTOUR = 2;
+      }
     }
   }
   
@@ -362,8 +381,15 @@ message VectorBlock {
     int32 part_key = 3;
     //key used in Job/Workplane/patchesMap
     int32 patch_key = 4;
-    //index of the contour. Contours shall be enumerated ascending in each workplane to identifiy
-    //physical contours consisting of multiple vector blocks (e.g. when parameters change) as one
+    //Index of the closedContour in the workplane/Metadata/contours field this vector block is contained in.
+    //Contours shall be enumerated ascending in each workplane to identifiy physical contours
+    //consisting of multiple vector blocks (e.g. when parameters change) as one.
+    //If this parameter is set to any value smaller than 0, this explicitly indicates that none of the vectors
+    //of the block are contained in any contour (this is the case for e.g. single vector/line supports).
+    //If contour_index is set to a valid contour index, all of the blocks vectors are contained in the contour.
+    //The case of a vector block that partly overlaps a contour is excluded on purpose. Overlapping blocks cause
+    //a reexposure that should be handled by the machine controller. If containing contour meta data is calculated,
+    //overlapping vector blocks should be split and properly indicate the reexposure in the meta data.
     int32 contour_index = 5;
   }
   
