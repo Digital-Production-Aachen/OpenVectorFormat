@@ -133,7 +133,10 @@ message PowerGradientParams
   float gradientInWPerS = 2;
 }
 
-//Part is a reference to the CAD 3D model.
+//Part is a reference to a CAD 3D model instance in this Job.
+//Instances in a job may differ in their position, orientation, process strategy, marking parameters or support structures,
+//even if they are derived from the same parent part.
+//Common parent parts of instances can be identified using the parent_part_name, if set.
 message Part {
   string name = 1;
   GeometryInfo geometry_info = 2;
@@ -149,6 +152,9 @@ message Part {
   //the first item gets exposed first, e.g. exposure starts with downskin hatches, followed by inskin hatches
   //two LPBFMetadata objects are added with PartArea set to VOLUME in both, SkinType set to DOWN_SKIN in first and IN_SKIN in second
   repeated VectorBlock.LPBFMetadata exposure_order = 7;
+  
+  //reference to the original CAD 3D model this instance was created from
+  string parent_part_name = 8;
   
   //Metadata related to the geometry of the part
   message GeometryInfo {
