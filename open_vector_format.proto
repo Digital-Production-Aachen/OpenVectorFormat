@@ -325,6 +325,24 @@ message WorkPlane {
         //and typically are used to weld the parent contour to the hatches
         OFFSET_CONTOUR = 2;
       }
+      
+      //Edges (adjacency list) of the contour graph that represents the connectivity structure
+      //of contours between workPlanes. Each closedContour that contains adjacentContours
+      //or is targeted by any ContourGraphEdge is a node of the contour graph. ClosedContours might not
+      //be part of the contour graph, e.g. because they are PART_INNER_CONTOUR or OFFSET_CONTOUR
+      repeated ContourGraphEdge adjacentContours = 8;
+      
+      //directed, weighted (overlap area) edge of a contour graph;
+      //references its target node by workplane and closedContour indices
+      message ContourGraphEdge {
+        //workplaneNumber of the target closedContour node this edge is referencing
+        int32 target_workplane_number = 1;
+        //index (in the target workplane) of the adjacent closedContour this edge is targeting
+        int32 adjacent_contour_index = 2;
+        //weight of the edge: overlap area (area union) between this closedContour node
+        //and the edge's target closedContour node (projected along z-axis into this workplane)
+        double overlap_area_in_mm_2 = 3;
+      }
     }
   }
   
