@@ -127,3 +127,12 @@ A WorkPlaneLUT contains
 - an array of the starting positions for the VectorBlocks of this WorkPlane. 
 
 Here, the array of starting positions direclty indicates the starting position of a VectorBlock protobuf message that can be parsed directly.
+
+
+## Logo
+
+The Open Vector Format icon as displayed below is free of use under the Creative Common License CC BY 4.0.
+
+![OVF Icon](OVF_Icon.svg)
+
+ 
