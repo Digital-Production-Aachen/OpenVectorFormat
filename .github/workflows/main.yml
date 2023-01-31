@@ -28,7 +28,7 @@ jobs:
       - name: Install prerequisits
         run: |
           sudo apt install protobuf-compiler
-          go get github.com/golang/protobuf/protoc-gen-go
+          go install github.com/golang/protobuf/protoc-gen-go@latest
           
       - name: Create folder structure
         run: |
