@@ -125,6 +125,9 @@ message MarkingParams {
     //8-shape wobble movement parallel to the current movement direction
     LYING_EIGHT_WOBBLE = 3;
   }
+  
+  //reserved tag range to allow for OVF varaiations without conflicts, e.g. adding proprietary parameters
+  reserved 128 to 164;
 }
 
 message PowerGradientParams
