@@ -573,3 +573,28 @@ message VectorBlock {
     repeated LineSequenceParaAdapt hatchAsLinesequence = 1;
   }
 }
+
+message BuildProcessorStrategy{
+
+    string BuildProcessorStrategyID = 1;
+    string materialID = 2;
+    string name = 3;
+    string materialName = 4;
+    repeated ParameterSet parameterSets = 5;
+    SupportParams supportParams = 6;
+    
+    message ParameterSet{
+
+        open_vector_format.VectorBlock.LPBFMetadata LPBFMetaData = 1;
+        open_vector_format.Part.ProcessStrategy processStrategy = 2;
+        open_vector_format.MarkingParams markingParams = 3;
+    
+    }
+  }
+
+  message SupportParams{
+    //Scriptname which get's loaded into the module, added parameters are modifying original script
+    string scriptName = 1;
+    //Minimal overhangangle where areas get's supported
+    double overhangAngleInDeg = 2;
+}
