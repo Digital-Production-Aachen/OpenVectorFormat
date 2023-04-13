@@ -576,25 +576,24 @@ message VectorBlock {
 
 message BuildProcessorStrategy{
 
-    string BuildProcessorStrategyID = 1;
-    string materialID = 2;
+    string build_processor_strategy_id = 1;
+    string material_id = 2;
     string name = 3;
-    string materialName = 4;
-    repeated ParameterSet parameterSets = 5;
-    SupportParams supportParams = 6;
+    string material_name = 4;
+    repeated ParameterSet parameter_sets = 5;
+    SupportParams support_params = 6;
     
     message ParameterSet{
 
-        open_vector_format.VectorBlock.LPBFMetadata LPBFMetaData = 1;
-        open_vector_format.Part.ProcessStrategy processStrategy = 2;
-        open_vector_format.MarkingParams markingParams = 3;
-    
+        open_vector_format.VectorBlock.LPBFMetadata lpbf_meta_data = 1;
+        open_vector_format.Part.ProcessStrategy process_strategy = 2;
+        open_vector_format.MarkingParams marking_params = 3;
     }
   }
 
   message SupportParams{
     //Scriptname which get's loaded into the module, added parameters are modifying original script
-    string scriptName = 1;
+    string script_name = 1;
     //Minimal overhangangle where areas get's supported
-    double overhangAngleInDeg = 2;
+    double overhang_angle_in_deg = 2;
 }
