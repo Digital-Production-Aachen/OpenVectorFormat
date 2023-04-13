@@ -581,7 +581,6 @@ message BuildProcessorStrategy{
     string name = 3;
     string material_name = 4;
     repeated ParameterSet parameter_sets = 5;
-    SupportParams support_params = 6;
     
     message ParameterSet{
 
@@ -590,10 +589,3 @@ message BuildProcessorStrategy{
         open_vector_format.MarkingParams marking_params = 3;
     }
   }
-
-  message SupportParams{
-    //Scriptname which get's loaded into the module, added parameters are modifying original script
-    string script_name = 1;
-    //Minimal overhangangle where areas get's supported
-    double overhang_angle_in_deg = 2;
-}
