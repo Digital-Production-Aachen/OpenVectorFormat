@@ -46,6 +46,8 @@ message Job {
     string job_name = 3;
     string author = 4;
     string description = 5;
+    //2D axis aligned bounding box of all workplanes vector block coordinates
+    AxisAlignedBox2D Bounds = 6;
   }
 }
 
@@ -329,6 +331,9 @@ message WorkPlane {
         OFFSET_CONTOUR = 2;
       }
     }
+
+    //2D axis aligned bounding box of all the workplanes vector block coordinates
+    AxisAlignedBox2D Bounds = 7;
   }
   
   //A patch is a subdivision in a workPlane with an own local coordinate system.
@@ -400,6 +405,8 @@ message VectorBlock {
     //a reexposure that should be handled by the machine controller. If containing contour meta data is calculated,
     //overlapping vector blocks should be split and properly indicate the reexposure in the meta data.
     int32 contour_index = 5;
+    //2D axis aligned bounding box of the vector block coordinates
+    AxisAlignedBox2D Bounds = 6;
   }
   
   // ProcessMetaData for LPBF 
@@ -572,4 +579,13 @@ message VectorBlock {
   message HatchesParaAdapt {
     repeated LineSequenceParaAdapt hatchAsLinesequence = 1;
   }
+}
+
+  //axis aligned rectangular box in 2D
+  //defined by the x and y coordinates of the lower left (min) and upper right (max) corner
+message AxisAlignedBox2D {
+  float x_min = 1;
+  float y_min = 2;
+  float x_max = 3;
+  float y_max = 4;
 }
