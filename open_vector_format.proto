@@ -400,6 +400,9 @@ message VectorBlock {
     //a reexposure that should be handled by the machine controller. If containing contour meta data is calculated,
     //overlapping vector blocks should be split and properly indicate the reexposure in the meta data.
     int32 contour_index = 5;
+	//Optional metadata that is a prefered color to render the vectordata of this vectorblock in a viewer.
+	//int32 is interpreted as byte[4] with byte[0] = red, byte[1] = green, byte[2] = blue, byte[3] = alpha
+	int32 display_color = 6;
   }
   
   // ProcessMetaData for LPBF 
