@@ -30,7 +30,6 @@ import "open_vector_format.proto";
 //For each meta data combination a process strategy and marking params can be stored.
 //Handling parameter fallbacks is responsibility of the build processor.
 message BuildProcessorStrategy{
-
     string build_processor_strategy_id = 1;
     string material_id = 2;
     string name = 3;
@@ -42,7 +41,5 @@ message BuildProcessorStrategy{
         open_vector_format.VectorBlock.LPBFMetadata lpbf_meta_data = 1;
         open_vector_format.Part.ProcessStrategy process_strategy = 2;
         open_vector_format.MarkingParams marking_params = 3;
-
     }
-
 }

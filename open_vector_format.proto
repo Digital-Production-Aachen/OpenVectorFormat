@@ -47,7 +47,7 @@ message Job {
     string author = 4;
     string description = 5;
     //2D axis aligned bounding box of all workplanes vector block coordinates
-    AxisAlignedBox2D Bounds = 6;
+    AxisAlignedBox2D bounds = 6;
   }
 }
 
@@ -410,8 +410,8 @@ message VectorBlock {
     //overlapping vector blocks should be split and properly indicate the reexposure in the meta data.
     int32 contour_index = 5;
     //2D axis aligned bounding box of the vector block coordinates
-    AxisAlignedBox2D Bounds = 6;
-	//Optional metadata that is a prefered color to render the vectordata of this vectorblock in a viewer.
+    AxisAlignedBox2D bounds = 6;
+	//Optional metadata defining a preferred 32bit RGBA color to render the vector data of this vector block in a viewer.
 	//int32 is interpreted as byte[4] with byte[0] = red, byte[1] = green, byte[2] = blue, byte[3] = alpha
 	int32 display_color = 7;  }
   
