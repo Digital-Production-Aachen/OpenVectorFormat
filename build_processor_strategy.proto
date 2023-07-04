@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright (c) 2021 Digital-Production-Aachen
+// Copyright (c) 2023 Digital-Production-Aachen
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,6 +21,7 @@
 // SOFTWARE.
 syntax = "proto3";
 package open_vector_format;
+option go_package = "github.com/digital-production-aachen/openvectorformat/proto";
 import "open_vector_format.proto";
 
 //BuildProcessorStrategy is a settings collection object for a build processor.
