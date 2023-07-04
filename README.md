@@ -66,6 +66,19 @@ The MarkingParams object contains process parameters for the execution of the ve
 The basic objects Job, WorkPlane and VectorBlock contain additional fields for meta data related that object. The most relevant Metadata object is the Part. 
 Many AM processes like LPBF create a whole batch of parts at once that get separated later. The information about the part relationship is not relevant for the printing process itself, but highly relevant for applications that process the data after slicing. Especially quality assurance applications need this relationship to connect data that is generated during or after AM processing like process monitoring sensor data and quality control measurements with the machine code.
 
+### Build Processor Strategy
+
+BuildProcessorStrategy is a settings collection object for a build processor.
+A build processor is a program that applies parameters to the output of a slicer.
+The build processor reads slice output (vectors representing a geometry without parameters) and creates Open Vector Format build files
+for the desired process, target machine and material.
+The BuildProcessorStrategy definition uses OpenVectorFormat definitions to save a collection of settings
+for a specific material that can be used to add parameters to OVF vector data
+based on the LPBF meta data of the VectorBlock objects.
+For each meta data combination a process strategy and marking params can be stored.
+Handling parameter fallbacks is responsibility of the build processor.
+A basic C# implementation of a build processor can be found in the OpenVectorFormatTools repository.
+
 ## The tech behind
 The OpenVectorFormat description is based on Google Protobuf. Protobuf already satisfies many of the technical requirements for a format like this:
 - Offering a space efficient binary encoding to handle large jobs with multiple gigabytes of data
