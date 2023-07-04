@@ -242,6 +242,10 @@ message Part {
       //size of each patch is pattern_hatch_length_in_mm in marking direction, unrestricted perpendicular to the marking direction
       //patch overlap (size of area with two patches) is of size extend_into_in_mm
       STRIPES = 3;
+      //hatches are seperated into patches ("hexagon")
+      //size of each sidelength is pattern_hatch_length_in_mm and the long and short diagonal is calculated from it
+      //patch overlap (size of area with two patches) is of size extend_into_in_mm
+      HEXAGON = 4;
     }
   }
 }
