@@ -46,6 +46,8 @@ message Job {
     string job_name = 3;
     string author = 4;
     string description = 5;
+    //2D axis aligned bounding box of all workplanes vector block coordinates
+    AxisAlignedBox2D Bounds = 6;
   }
 }
 
@@ -329,6 +331,9 @@ message WorkPlane {
         OFFSET_CONTOUR = 2;
       }
     }
+
+    //2D axis aligned bounding box of all the workplanes vector block coordinates
+    AxisAlignedBox2D Bounds = 7;
   }
   
   //A patch is a subdivision in a workPlane with an own local coordinate system.
@@ -400,10 +405,11 @@ message VectorBlock {
     //a reexposure that should be handled by the machine controller. If containing contour meta data is calculated,
     //overlapping vector blocks should be split and properly indicate the reexposure in the meta data.
     int32 contour_index = 5;
+    //2D axis aligned bounding box of the vector block coordinates
+    AxisAlignedBox2D Bounds = 6;
 	//Optional metadata that is a prefered color to render the vectordata of this vectorblock in a viewer.
 	//int32 is interpreted as byte[4] with byte[0] = red, byte[1] = green, byte[2] = blue, byte[3] = alpha
-	int32 display_color = 6;
-  }
+	int32 display_color = 7;  }
   
   // ProcessMetaData for LPBF 
   message LPBFMetadata {
@@ -577,18 +583,11 @@ message VectorBlock {
   }
 }
 
-message BuildProcessorStrategy{
-
-    string build_processor_strategy_id = 1;
-    string material_id = 2;
-    string name = 3;
-    string material_name = 4;
-    repeated ParameterSet parameter_sets = 5;
-    
-    message ParameterSet{
-
-        open_vector_format.VectorBlock.LPBFMetadata lpbf_meta_data = 1;
-        open_vector_format.Part.ProcessStrategy process_strategy = 2;
-        open_vector_format.MarkingParams marking_params = 3;
-    }
-  }
+  //axis aligned rectangular box in 2D
+  //defined by the x and y coordinates of the lower left (min) and upper right (max) corner
+message AxisAlignedBox2D {
+  float x_min = 1;
+  float y_min = 2;
+  float x_max = 3;
+  float y_max = 4;
+}
