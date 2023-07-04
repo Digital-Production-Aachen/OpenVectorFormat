@@ -21,6 +21,7 @@
 // SOFTWARE.
 syntax = "proto3";
 package open_vector_format;
+option go_package = "github.com/digital-production-aachen/openvectorformat/proto";
 import "open_vector_format.proto";
 
 //BuildProcessorStrategy is a settings collection object for a build processor.
