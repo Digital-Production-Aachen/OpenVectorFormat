@@ -53,6 +53,11 @@ jobs:
           protoc -I=. --plugin=protoc-gen-go=/home/runner/go/bin/protoc-gen-go --go_out=generated/go_autogen ovf_lut.proto
           protoc -I=. --java_out=generated/java_autogen ovf_lut.proto
           protoc -I=. --python_out=generated/python_autogen ovf_lut.proto
+          protoc -I=. --csharp_out=generated/cs_autogen build_processor_strategy.proto
+          protoc -I=. --cpp_out=generated/cpp_autogen build_processor_strategy.proto
+          protoc -I=. --plugin=protoc-gen-go=/home/runner/go/bin/protoc-gen-go --go_out=generated/go_autogen build_processor_strategy.proto
+          protoc -I=. --java_out=generated/java_autogen build_processor_strategy.proto
+          protoc -I=. --python_out=generated/python_autogen build_processor_strategy.proto
             
 
 
