@@ -109,6 +109,9 @@ message MarkingParams {
   PowerGradientParams powerGradient = 25;
   //meta data: custom, human readable name of this marking parameter set
   string name = 26;
+  //discrete beam shape profile number
+  //used to control beam shaping devices (e.g. nLight AFX) to switch between different beam shape profiles (e.g. from Gauss-shaped to donut-shaped)
+  int32 beam_shape_profile_nr = 27;
 
   enum MarkingMode {
     NO_SKY = 0;
