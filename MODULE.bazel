@@ -2,4 +2,4 @@ module(
   name = "ovf",
   version = "1.7.0"
 )
-bazel_dep(name = "rules_proto", version = "7.1.0")
+bazel_dep(name = "protobuf", version = "27.2")
