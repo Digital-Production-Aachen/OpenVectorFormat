@@ -25,8 +25,8 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it 
-      - uses: actions/checkout@latest_version
-      - uses: actions/setup-go@latest_version
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
       - name: Install prerequisits
         run: |
           sudo apt install protobuf-compiler
