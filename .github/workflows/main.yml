@@ -23,8 +23,8 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2.3.4
-      - uses: actions/setup-go@v2
+      - uses: actions/checkout@latest_version
+      - uses: actions/setup-go@latest_version
       - name: Install prerequisits
         run: |
           sudo apt install protobuf-compiler
@@ -57,7 +57,7 @@ jobs:
           protoc -I=. --java_out=generated/java_autogen build_processor_strategy.proto
           protoc -I=. --python_out=generated/python_autogen build_processor_strategy.proto
       - name: Upload
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@latest_version
         with:
           name: generated_code
           path: generated/
