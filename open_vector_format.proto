@@ -59,6 +59,8 @@ message JobParameters {
   repeated double shielding_gas_directions = 2;
   //vector of main direction of a material feed (e.g. powder coater, powder feed, extrusion nozzle) (xy or xyz)
   repeated double material_feed_directions = 3;
+  //additional proprietary parameters
+  repeated Part.ProcessStrategy.ProprietaryParam additional_parameters = 4;
 }
 
 //Parameters controlling the tool (e.g. laser beam) behaviour
@@ -99,6 +101,17 @@ message MarkingParams {
   float limit = 18;
   float n_prev_in_us = 19;
   float n_post_in_us = 20;
+  oneof corner_blending_target_value{
+    //maximum allowed deviation from the setpoint mark path to optimize scanner dynamics by "cutting corners"
+    //mark speed is kept constant at the setpoint value laser_speed_in_mm_per_s
+    //if the corner tolerance cannot be satisfied, skywriting is performed
+    //Synonyms: radial tolerance
+    float corner_tolerance = 28;
+    //minimum mark speed to guaranty by scanner dynamics
+    //mark speed may be reduced down between laser_speed_in_mm_per_s and minimum_mark_speed when "cutting corners"
+    //if the minimum mark speed cannot be satisfied, skywriting is performed
+    float minimum_mark_speed = 29;
+  }
 
   //Parameters for marking with Wobble
   float wob_frequency_in_hz = 21;
@@ -119,6 +132,10 @@ message MarkingParams {
     SKY_1 = 1;
     SKY_2 = 2;
     SKY_3 = 3;
+    //Controls Sky Writing jerk-limited based on a lookahead simulation of scanner dynamics.
+    //manual skywriting params (n_prev_in_us, n_post_in_us, time_lag_in_us, laser_on_shift_in_us, limit, polygon_delay_in_us) are ignored
+    //Synonyms: BlendMode (ScanLab), ScanPack (Novanta)
+    DYNAMIC_LOOKAHEAD = 4;
   }
 
   enum WobbleMode {
@@ -228,7 +245,10 @@ message Part {
     //generic definition of proprietary parameters descriptor
     message ProprietaryParam{
       string param_name = 1;
-      double param_value = 2;
+      oneof parameter_value{
+        double param_value = 2;
+        double param_value_string = 4;
+      }
       string param_description = 3;
     }
 
