@@ -59,8 +59,8 @@ message JobParameters {
   repeated double shielding_gas_directions = 2;
   //vector of main direction of a material feed (e.g. powder coater, powder feed, extrusion nozzle) (xy or xyz)
   repeated double material_feed_directions = 3;
-  //additional proprietary parameters
-  repeated Part.ProcessStrategy.ProprietaryParam additional_parameters = 4;
+  //map of additional proprietary parameters
+  map<string,Part.ProcessStrategy.ProprietaryParam> additional_parameters = 4;
 }
 
 //Parameters controlling the tool (e.g. laser beam) behaviour
@@ -247,7 +247,8 @@ message Part {
       string param_name = 1;
       oneof parameter_value{
         double param_value = 2;
-        double param_value_string = 4;
+        string param_string = 4;
+        bytes param_blob = 5;
       }
       string param_description = 3;
     }
