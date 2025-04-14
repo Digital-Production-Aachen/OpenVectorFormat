@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright (c) 2023 Digital-Production-Aachen
+// Copyright (c) 2025 Digital-Production-Aachen
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -87,7 +87,8 @@ message MarkingParams {
 
   //marking mode switches between normal marking and skywriting modes
   MarkingMode marking_mode = 10;
-
+  CornerBlendMode blend_mode = 28;
+  
   //Parameters for marking without Skywriting
   float jump_delay_in_us = 11;
   float laser_off_delay_in_us = 12;
@@ -98,20 +99,17 @@ message MarkingParams {
   //Parameters for marking with Skywriting
   float time_lag_in_us = 16;
   float laser_on_shift_in_us = 17;
+  //limit angle to switch from polygon delay to skywriting [degrees]
   float limit = 18;
   float n_prev_in_us = 19;
   float n_post_in_us = 20;
-  oneof corner_blending_target_value{
-    //maximum allowed deviation from the setpoint mark path to optimize scanner dynamics by "cutting corners"
-    //mark speed is kept constant at the setpoint value laser_speed_in_mm_per_s
-    //if the corner tolerance cannot be satisfied, skywriting is performed
-    //Synonyms: radial tolerance
-    float corner_tolerance = 28;
-    //minimum mark speed to guaranty by scanner dynamics
-    //mark speed may be reduced down between laser_speed_in_mm_per_s and minimum_mark_speed when "cutting corners"
-    //if the minimum mark speed cannot be satisfied, skywriting is performed
-    float minimum_mark_speed = 29;
-  }
+  //maximum allowed deviation from the setpoint mark path to optimize scanner dynamics by "cutting corners"
+  //Only applies in CornerBlendMode.SWIFT_BLENDING_MAXIMIZE_SPEED and 
+  //Synonyms: radial tolerance
+  float corner_tolerance = 28;
+  //minimum mark speed to guaranty by scanner dynamics
+  //mark speed may be reduced down between laser_speed_in_mm_per_s and minimum_mark_speed when "cutting corners"
+  float minimum_mark_speed = 29;
 
   //Parameters for marking with Wobble
   float wob_frequency_in_hz = 21;
@@ -135,7 +133,28 @@ message MarkingParams {
     //Controls Sky Writing jerk-limited based on a lookahead simulation of scanner dynamics.
     //manual skywriting params (n_prev_in_us, n_post_in_us, time_lag_in_us, laser_on_shift_in_us, limit, polygon_delay_in_us) are ignored
     //Synonyms: BlendMode (ScanLab), ScanPack (Novanta)
-    DYNAMIC_LOOKAHEAD = 4;
+    SKYWRITING_LOOKAHEAD = 4;
+  }
+  
+  enum CornerBlendMode {
+    //Uses the angle given by "limit" to choose between executing polygon delay or skywriting.
+    //When skywriting is not performed, a delay of length polygon_delay_in_us is inserted.
+    LIMIT_ANGLE_POLYGON_DELAY = 0;
+    //Keeps the marking speed constant to the speed defined in laser_speed_in_mm_per_s.
+    //Then optimizes the accuracy to be as close to the setpoint geometry as scanner dynamics allow.
+    //If the corner_tolerance cannot be fulfilled, the behaviour depends on the skywriting mode.
+    //If skywriting is DYNAMIC_LOOKAHEAD, a skywriting motion is inserted. If skywriting mode is NO_SKY, a dynamics violation is triggered.
+    SWIFT_BLENDING_CONSTANT_SPEED = 1;
+    //Utilizes scanner dynamics lookahead to maximize the speed of the scanning process.
+    //Guaranties that the corner_tolerance is fulfilled.
+    //Maximizes the scanning speed possibly beyond the limits of minimum_mark_speed and laser_speed_in_mm_per_s.
+    //Does not insert sky writing-like motions, instead decelerates as needed on the trajectory. Ignores marking_mode.
+    SWIFT_BLENDING_MAXIMIZE_SPEED = 2;
+    //Utilizes scanner dynamics lookahead to maximize the accuracy of the scanning process.
+    //Guaranties that the minimum_mark_speed is fulfilled.
+    //If the corner_tolerance cannot be fulfilled, the behaviour depends on the skywriting mode.
+    //If skywriting is DYNAMIC_LOOKAHEAD, a skywriting motion is inserted. If skywriting mode is NO_SKY, a dynamics violation is triggered.
+    BEST_ACCURACY_MIN_MARK_SPEED = 3;
   }
 
   enum WobbleMode {
@@ -584,7 +603,18 @@ message VectorBlock {
   //Pause the exposure procedure. This can be necessary e.g. for thermal reasons,
   //or for syncing mulitple laser scanner units, preventing overlap or smoke interaction.
   message ExposurePause {
+    //static wait time in the exposure
     uint64 pause_in_us = 1;
+  }
+  
+  //Synchronization block for multi laser scanner unit systems. 
+  //Creates dynamic dependencies between multiple lasers exposure orders that shall be enforced by the machine controller in real time.
+  message SynchronizationBlock {
+    //The SynchronizationBlock references another vector block to wait on in the same workplane by index.
+    //Exposure of the laser of SynchronizationBlock (referenced by laser_index) will pause and not continue 
+    //until the block referenced by vector_block_index_to_wait_on has been fully executed.
+    //Caution must be taken to not create cyclic synchronization dependencies, which would cause a deadlock.
+    int32 vector_block_index_to_wait_on = 1;
   }
 
   //A LineSequence with additional adaption of one laser parameter along the vectors.
