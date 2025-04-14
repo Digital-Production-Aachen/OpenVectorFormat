@@ -106,10 +106,10 @@ message MarkingParams {
   //maximum allowed deviation from the setpoint mark path to optimize scanner dynamics by "cutting corners"
   //Only applies in CornerBlendMode.SWIFT_BLENDING_MAXIMIZE_SPEED and 
   //Synonyms: radial tolerance
-  float corner_tolerance = 28;
+  float corner_tolerance = 29;
   //minimum mark speed to guaranty by scanner dynamics
   //mark speed may be reduced down between laser_speed_in_mm_per_s and minimum_mark_speed when "cutting corners"
-  float minimum_mark_speed = 29;
+  float minimum_mark_speed = 30;
 
   //Parameters for marking with Wobble
   float wob_frequency_in_hz = 21;
@@ -414,6 +414,7 @@ message VectorBlock {
     ExposurePause exposure_pause = 10;
     LineSequenceParaAdapt line_sequence_para_adapt = 11;
     HatchesParaAdapt _hatchParaAdapt = 12;
+    SynchronizationBlock sync_block = 13;
   }
 
   //key used in Job/markingParamsMap
