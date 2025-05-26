@@ -457,7 +457,22 @@ message VectorBlock {
     AxisAlignedBox2D bounds = 6;
     //Optional metadata defining a preferred 32bit RGBA color to render the vector data of this vector block in a viewer.
     //int32 is interpreted as byte[4] with byte[0] = red, byte[1] = green, byte[2] = blue, byte[3] = alpha
-    int32 display_color = 7;  }
+    int32 display_color = 7;
+    
+    //---these fields can be used by simulation software to write detailed exposure times into the OVF structure---
+    
+    //internal execution time of the vector block, including block internal delays and skywriting
+    //this time stays constant when the vector block is translated/rotated, excludes jump_to_time_in_s
+    //the full execution time is the sum of exposure_time_in_s and jump_to_time_in_s
+    double exposure_time_in_s = 8;
+    //jump time from the end position of the previous vector block to the start position of this vector block
+    //this time changes when the vector block is translated/rotated
+    //the full execution time is the sum of exposure_time_in_s and jump_to_time_in_s
+    double jump_to_time_in_s = 9;
+    //time the laser power was on
+    //can be used to calculate productive time percentage and theoretical energy input (multiply with laser_power_in_w)
+    double laser_on_time_in_s = 10;
+  }
   
   // ProcessMetaData for LPBF 
   message LPBFMetadata {
@@ -618,25 +633,29 @@ message VectorBlock {
     int32 vector_block_index_to_wait_on = 1;
   }
 
-  //A LineSequence with additional adaption of one laser parameter along the vectors.
-  //Each point consists of (x,y,parameterValue) for 2D.
-  //The parameterValue is the goal value that will be reached at the end of the vector,
+  //A LineSequence with additional adaption of one or more laser parameters along the vectors.
+  //Each point consists of (x,y,parameterValue1,parameterValue2...) for 2D.
+  //The parameter field defines which parameter values are contained inside points_with_paras.
+  //The count of the parameter field defines how many floats define parameters (and which) after x and y.
+  //Each parameterValue is the goal value that will be reached at the end of the vector,
   //scaling linear along the vector. The goal gets priority and overwrites settings of the
-  //parameter set.
+  //marking parameter set. All other values are still statically set as defined in the marking parameter set.
   message LineSequenceParaAdapt {
     repeated float points_with_paras = 1;
   
-    AdaptedParameter parameter = 2;
+    repeated AdaptedParameter parameter = 2;
     enum AdaptedParameter {
       LASER_POWER_IN_W = 0;
       LASER_FOCUS_SHIFT_IN_MM = 1;
-      //for Q-Switch only
       LASER_PULSE_LENGTH_IN_US = 2;
       LASER_PULSE_REPITION_RATE_IN_HZ = 3;
+      LASER_SPEED_IN_MM_PER_S = 4;
     }
   }
   
   //A hatch divided into a line sequence with adaption parameter
+  //this vector block type saves significant amounts of vector block meta data
+  //compared to writing every hatch as its own LineSequenceParaAdapt block
   message HatchesParaAdapt {
     repeated LineSequenceParaAdapt hatchAsLinesequence = 1;
   }
