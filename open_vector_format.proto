@@ -59,6 +59,8 @@ message JobParameters {
   repeated double shielding_gas_directions = 2;
   //vector of main direction of a material feed (e.g. powder coater, powder feed, extrusion nozzle) (xy or xyz)
   repeated double material_feed_directions = 3;
+  //bounds of the scan fields associated with the respective laser_index found in vector blocks data
+  repeated AxisAlignedBox2D scan_field_bounds = 5;
   //map of additional proprietary parameters
   map<string,Part.ProcessStrategy.ProprietaryParam> additional_parameters = 4;
 }
