@@ -414,7 +414,16 @@ message VectorBlock {
     ExposurePause exposure_pause = 10;
     LineSequenceParaAdapt line_sequence_para_adapt = 11;
     HatchesParaAdapt _hatchParaAdapt = 12;
-    SynchronizationBlock sync_block = 13;
+    CubicBezierHatches cubic_bezier_hatches = 13;
+    QuadraticBezierHatches quadratic_bezier_hatches = 14;
+    CubicBezierSpline cubic_bezier_spline = 15;
+    QuadraticBezierSpline quadratic_bezier_spline = 16;
+    CubicBezierHatches3D cubic_bezier_hatches_3d = 17;
+    QuadraticBezierHatches3D quadratic_bezier_hatches_3d = 18;
+    CubicBezierSpline3D cubic_bezier_spline_3d = 19;
+    QuadraticBezierSpline3D quadratic_bezier_spline_3d = 20;
+
+    SynchronizationBlock sync_block = 21;
   }
 
   //key used in Job/markingParamsMap
@@ -536,13 +545,31 @@ message VectorBlock {
     WIRESTRUCTURE = 2;
     POINTS = 3;
   }
+  
+  //--- Vetor Block Type Definitions ---
+  //--- OVF performance: why use unstructured repeated float in vector block type definitions? ---
+
+  //The choice of using unstructured repeated float in OVF is very deliberate and the reasoning is performance.
+  //Approx. 99% of the data volume in OVF is the coordinate data. 
+  //Using repeated float enables reinterpreting the float data as an array of structs using equivalents of "memcast" in the target programming languages.
+  //This enables using different definitions of point structs without allocating again or copying the data.
+  
+  //Example use cases are struct definitions for different domain models or libraries,
+  //or Single Input Multipe Data (SIMD) vector types.
+  //Zero copy in place is the minimal overhead possible of any solution.
+  //This works in all cases where libraries use single precision floats.
+  
+  //Using repeated float also minimizes overhead in the wire format.
+  //The resulting packed proto encoding only needs a single TAG byte and a varint for the length, 
+  //resulting in only 2-5 bytes of encoding overhead per vector block.
+  //"Parsing" repeated float is a minimal overhead memcopy of the floating point data, e.g. from the file/network stream buffer.
 
   //LineSequence:
   //A lineSequence is defined by a set of vertex points (x,y), 
   //connected contiguously in the listed order by straight line segments.
   //A closed lineSequence can also be called a polygon.
   message LineSequence {
-    repeated float points = 1;
+    repeated float points = 1; // len % 2 == 0, len >= 4
   }
 
   //LineSequence3D:
@@ -550,35 +577,35 @@ message VectorBlock {
   //connected contiguously in the listed order by straight line segments.
   //A closed lineSequence can also be called a polygon.
   message LineSequence3D {
-    repeated float points = 1;
+    repeated float points = 1; // len % 3 == 0, len >= 6
   }
 
   //Hatches:
   //A hatch is a set of independent straight lines,
   //each defined by one start and one end point (x,y) for 2D.
   message Hatches {
-    repeated float points = 1;
+    repeated float points = 1; // len % 4 == 0, len >= 4
   }
 
   //Hatches3D:
   //A hatch is a set of independent straight lines,
   //each defined by one start and one end point (x,y,z) for 3D.
   message Hatches3D {
-    repeated float points = 1;
+    repeated float points = 1; // len % 6 == 0, len >= 6
   }
 
   //PointSequence:
   //A point sequence is a set of points, each marked
   //for a fixed period of time. Each point consists of (x,y) for 2D.
   message PointSequence {
-    repeated float points = 1;
+    repeated float points = 1; // len % 2 == 0, len >= 2
   }
 
   //PointSequence3D:
   //A point sequence is a set of points, each marked
   //for a fixed period of time. Each point consists of (x,y,z) for 3D.
   message PointSequence3D {
-    repeated float points = 1;
+    repeated float points = 1; // len % 3 == 0, len >= 3
   }
 
   //An arc is defined by a start point on the circle,
@@ -590,7 +617,7 @@ message VectorBlock {
     double angle = 1;
     float start_dx = 2;
     float start_dy = 3;
-    repeated float centers = 4;
+    repeated float centers = 4; // len % 2 == 0, len >= 2
   }
 
   //An arc3D (edge of a plate) is defined by a start point on the circle,
@@ -603,7 +630,7 @@ message VectorBlock {
     float start_dx = 2;
     float start_dy = 3;
     float start_dz = 4;
-    repeated float centers = 5;
+    repeated float centers = 5; // len % 3 == 0, len >= 3
   }
 
   //An ellipse is defined like an arc, with additional parameters
@@ -641,7 +668,7 @@ message VectorBlock {
   //scaling linear along the vector. The goal gets priority and overwrites settings of the
   //marking parameter set. All other values are still statically set as defined in the marking parameter set.
   message LineSequenceParaAdapt {
-    repeated float points_with_paras = 1;
+    repeated float points_with_paras = 1; // len % 3 == 0, len >= 3
   
     repeated AdaptedParameter parameter = 2;
     enum AdaptedParameter {
@@ -658,6 +685,69 @@ message VectorBlock {
   //compared to writing every hatch as its own LineSequenceParaAdapt block
   message HatchesParaAdapt {
     repeated LineSequenceParaAdapt hatchAsLinesequence = 1;
+  }
+
+  // Quadratic Bézier segments in 2D.
+  // Each segment: (x0, y0, cx, cy, x1, y1)  => 6 floats/segment.
+  // Pack N: [x0,y0,cx,cy,x1,y1,  x0,y0,cx,cy,x1,y1,  ...]
+  message QuadraticBezierHatches {
+    repeated float segments = 1; // len % 6 == 0, len >= 6
+  }
+
+  // Cubic Bézier segments in 2D.
+  // Each segment: (x0, y0, c1x, c1y, c2x, c2y, x1, y1)  => 8 floats/segment.
+  // Pack N: [x0,y0,c1x,c1y,c2x,c2y,x1,y1,  ...]
+  message CubicBezierHatches {
+    repeated float segments = 1; // len % 8 == 0, len >= 8
+  }
+
+  // Linked Quadratic Bézier spline in 2D (continuous).
+  // start_control packs tuples (x_i, y_i, cx_i, cy_i) => 4 floats/tuple.
+  // The end of segment i is the start (x_{i+1},y_{i+1}); the last segment ends at (last_x,last_y).
+  message QuadraticBezierSpline {
+    repeated float start_control = 1; // len % 4 == 0, len >= 4
+    float last_x = 2;
+    float last_y = 3;
+  }
+
+  // Linked Cubic Bézier spline in 2D (continuous).
+  // start_control packs tuples (x_i, y_i, c1x_i, c1y_i, c2x_i, c2y_i) => 6 floats/tuple.
+  message CubicBezierSpline {
+    repeated float start_control = 1; // len % 6 == 0, len >= 6
+    float last_x = 2;
+    float last_y = 3;
+  }
+
+  // Quadratic Bézier segments in 3D.
+  // Each segment: (x0, y0, z0, cx, cy, cz, x1, y1, z1)  => 9 floats/segment.
+  // Pack N: [x0,y0,z0,cx,cy,cz,x1,y1,z1,  x0,y0,z0,cx,cy,cz,x1,y1,z1,  ...]
+  message QuadraticBezierHatches3D {
+    repeated float segments = 1; // len % 9 == 0, len >= 9
+  }
+
+  // Cubic Bézier segments in 3D.
+  // Each segment: (x0, y0, z0, c1x, c1y, c1z, c2x, c2y, c2z, x1, y1, z1)  => 12 floats/segment.
+  // Pack N: [x0,y0,z0,c1x,c1y,c1z,c2x,c2y,c2z,x1,y1,z1,  ...]
+  message CubicBezierHatches3D {
+    repeated float segments = 1; // len % 12 == 0, len >= 12
+  }
+
+  // Linked Quadratic Bézier spline in 3D (continuous).
+  // start_control packs (x_i, y_i, z_i, cx_i, cy_i, cz_i) => 6 floats/tuple.
+  message QuadraticBezierSpline3D {
+    repeated float start_control = 1; // len % 6 == 0, len >= 6
+    float last_x = 2;
+    float last_y = 3;
+    float last_z = 4;
+  }
+
+  // Linked Cubic Bézier spline in 3D (continuous).
+  // start_control packs (x_i, y_i, z_i, c1x_i, c1y_i, c1z_i, c2x_i, c2y_i, c2z_i) => 9 floats/tuple.
+  message CubicBezierSpline3D {
+    repeated float start_control = 1; // len % 9 == 0, len >= 9
+    float last_x = 2;
+    float last_y = 3;
+    float last_z = 4;
   }
 }
 
