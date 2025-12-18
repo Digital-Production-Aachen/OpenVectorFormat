@@ -1,6 +1,6 @@
 // MIT License
 // 
-// Copyright (c) 2023 Digital-Production-Aachen
+// Copyright (c) 2025 Digital-Production-Aachen
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -59,6 +59,10 @@ message JobParameters {
   repeated double shielding_gas_directions = 2;
   //vector of main direction of a material feed (e.g. powder coater, powder feed, extrusion nozzle) (xy or xyz)
   repeated double material_feed_directions = 3;
+  //bounds of the scan fields associated with the respective laser_index found in vector blocks data
+  repeated AxisAlignedBox2D scan_field_bounds = 5;
+  //map of additional proprietary parameters
+  map<string,Part.ProcessStrategy.ProprietaryParam> additional_parameters = 4;
 }
 
 //Parameters controlling the tool (e.g. laser beam) behaviour
@@ -85,7 +89,8 @@ message MarkingParams {
 
   //marking mode switches between normal marking and skywriting modes
   MarkingMode marking_mode = 10;
-
+  CornerBlendMode blend_mode = 28;
+  
   //Parameters for marking without Skywriting
   float jump_delay_in_us = 11;
   float laser_off_delay_in_us = 12;
@@ -96,9 +101,17 @@ message MarkingParams {
   //Parameters for marking with Skywriting
   float time_lag_in_us = 16;
   float laser_on_shift_in_us = 17;
+  //limit angle to switch from polygon delay to skywriting [degrees]
   float limit = 18;
   float n_prev_in_us = 19;
   float n_post_in_us = 20;
+  //maximum allowed deviation from the setpoint mark path to optimize scanner dynamics by "cutting corners"
+  //Only applies in CornerBlendMode.SWIFT_BLENDING_MAXIMIZE_SPEED and 
+  //Synonyms: radial tolerance
+  float corner_tolerance = 29;
+  //minimum mark speed to guaranty by scanner dynamics
+  //mark speed may be reduced down between laser_speed_in_mm_per_s and minimum_mark_speed when "cutting corners"
+  float minimum_mark_speed = 30;
 
   //Parameters for marking with Wobble
   float wob_frequency_in_hz = 21;
@@ -119,6 +132,31 @@ message MarkingParams {
     SKY_1 = 1;
     SKY_2 = 2;
     SKY_3 = 3;
+    //Controls Sky Writing jerk-limited based on a lookahead simulation of scanner dynamics.
+    //manual skywriting params (n_prev_in_us, n_post_in_us, time_lag_in_us, laser_on_shift_in_us, limit, polygon_delay_in_us) are ignored
+    //Synonyms: BlendMode (ScanLab), ScanPack (Novanta)
+    SKYWRITING_LOOKAHEAD = 4;
+  }
+  
+  enum CornerBlendMode {
+    //Uses the angle given by "limit" to choose between executing polygon delay or skywriting.
+    //When skywriting is not performed, a delay of length polygon_delay_in_us is inserted.
+    LIMIT_ANGLE_POLYGON_DELAY = 0;
+    //Keeps the marking speed constant to the speed defined in laser_speed_in_mm_per_s.
+    //Then optimizes the accuracy to be as close to the setpoint geometry as scanner dynamics allow.
+    //If the corner_tolerance cannot be fulfilled, the behaviour depends on the skywriting mode.
+    //If skywriting is DYNAMIC_LOOKAHEAD, a skywriting motion is inserted. If skywriting mode is NO_SKY, a dynamics violation is triggered.
+    SWIFT_BLENDING_CONSTANT_SPEED = 1;
+    //Utilizes scanner dynamics lookahead to maximize the speed of the scanning process.
+    //Guaranties that the corner_tolerance is fulfilled.
+    //Maximizes the scanning speed possibly beyond the limits of minimum_mark_speed and laser_speed_in_mm_per_s.
+    //Does not insert sky writing-like motions, instead decelerates as needed on the trajectory. Ignores marking_mode.
+    SWIFT_BLENDING_MAXIMIZE_SPEED = 2;
+    //Utilizes scanner dynamics lookahead to maximize the accuracy of the scanning process.
+    //Guaranties that the minimum_mark_speed is fulfilled.
+    //If the corner_tolerance cannot be fulfilled, the behaviour depends on the skywriting mode.
+    //If skywriting is DYNAMIC_LOOKAHEAD, a skywriting motion is inserted. If skywriting mode is NO_SKY, a dynamics violation is triggered.
+    BEST_ACCURACY_MIN_MARK_SPEED = 3;
   }
 
   enum WobbleMode {
@@ -228,7 +266,11 @@ message Part {
     //generic definition of proprietary parameters descriptor
     message ProprietaryParam{
       string param_name = 1;
-      double param_value = 2;
+      oneof parameter_value{
+        double param_value = 2;
+        string param_string = 4;
+        bytes param_blob = 5;
+      }
       string param_description = 3;
     }
 
@@ -374,14 +416,16 @@ message VectorBlock {
     ExposurePause exposure_pause = 10;
     LineSequenceParaAdapt line_sequence_para_adapt = 11;
     HatchesParaAdapt _hatchParaAdapt = 12;
-    CubicBezierHatches cubic_bezier_hatches = 13;                  
-    QuadraticBezierHatches quadratic_bezier_hatches = 14;          
-    CubicBezierSpline cubic_bezier_spline = 15;              
-    QuadraticBezierSpline quadratic_bezier_spline = 16;   
-    CubicBezierHatches3D cubic_bezier_hatches_3d = 17;                  
-    QuadraticBezierHatches3D quadratic_bezier_hatches_3d = 18;          
-    CubicBezierSpline3D cubic_bezier_spline_3d = 19;              
-    QuadraticBezierSpline3D quadratic_bezier_spline_3d = 20;  
+    CubicBezierHatches cubic_bezier_hatches = 13;
+    QuadraticBezierHatches quadratic_bezier_hatches = 14;
+    CubicBezierSpline cubic_bezier_spline = 15;
+    QuadraticBezierSpline quadratic_bezier_spline = 16;
+    CubicBezierHatches3D cubic_bezier_hatches_3d = 17;
+    QuadraticBezierHatches3D quadratic_bezier_hatches_3d = 18;
+    CubicBezierSpline3D cubic_bezier_spline_3d = 19;
+    QuadraticBezierSpline3D quadratic_bezier_spline_3d = 20;
+
+    SynchronizationBlock sync_block = 21;
   }
 
   //key used in Job/markingParamsMap
@@ -424,7 +468,22 @@ message VectorBlock {
     AxisAlignedBox2D bounds = 6;
     //Optional metadata defining a preferred 32bit RGBA color to render the vector data of this vector block in a viewer.
     //int32 is interpreted as byte[4] with byte[0] = red, byte[1] = green, byte[2] = blue, byte[3] = alpha
-    int32 display_color = 7;  }
+    int32 display_color = 7;
+    
+    //---these fields can be used by simulation software to write detailed exposure times into the OVF structure---
+    
+    //internal execution time of the vector block, including block internal delays and skywriting
+    //this time stays constant when the vector block is translated/rotated, excludes jump_to_time_in_s
+    //the full execution time is the sum of exposure_time_in_s and jump_to_time_in_s
+    double exposure_time_in_s = 8;
+    //jump time from the end position of the previous vector block to the start position of this vector block
+    //this time changes when the vector block is translated/rotated
+    //the full execution time is the sum of exposure_time_in_s and jump_to_time_in_s
+    double jump_to_time_in_s = 9;
+    //time the laser power was on
+    //can be used to calculate productive time percentage and theoretical energy input (multiply with laser_power_in_w)
+    double laser_on_time_in_s = 10;
+  }
   
   // ProcessMetaData for LPBF 
   message LPBFMetadata {
@@ -589,28 +648,43 @@ message VectorBlock {
   //Pause the exposure procedure. This can be necessary e.g. for thermal reasons,
   //or for syncing mulitple laser scanner units, preventing overlap or smoke interaction.
   message ExposurePause {
+    //static wait time in the exposure
     uint64 pause_in_us = 1;
   }
+  
+  //Synchronization block for multi laser scanner unit systems. 
+  //Creates dynamic dependencies between multiple lasers exposure orders that shall be enforced by the machine controller in real time.
+  message SynchronizationBlock {
+    //The SynchronizationBlock references another vector block to wait on in the same workplane by index.
+    //Exposure of the laser of SynchronizationBlock (referenced by laser_index) will pause and not continue 
+    //until the block referenced by vector_block_index_to_wait_on has been fully executed.
+    //Caution must be taken to not create cyclic synchronization dependencies, which would cause a deadlock.
+    int32 vector_block_index_to_wait_on = 1;
+  }
 
-  //A LineSequence with additional adaption of one laser parameter along the vectors.
-  //Each point consists of (x,y,parameterValue) for 2D.
-  //The parameterValue is the goal value that will be reached at the end of the vector,
+  //A LineSequence with additional adaption of one or more laser parameters along the vectors.
+  //Each point consists of (x,y,parameterValue1,parameterValue2...) for 2D.
+  //The parameter field defines which parameter values are contained inside points_with_paras.
+  //The count of the parameter field defines how many floats define parameters (and which) after x and y.
+  //Each parameterValue is the goal value that will be reached at the end of the vector,
   //scaling linear along the vector. The goal gets priority and overwrites settings of the
-  //parameter set.
+  //marking parameter set. All other values are still statically set as defined in the marking parameter set.
   message LineSequenceParaAdapt {
     repeated float points_with_paras = 1; // len % 3 == 0, len >= 3
   
-    AdaptedParameter parameter = 2;
+    repeated AdaptedParameter parameter = 2;
     enum AdaptedParameter {
       LASER_POWER_IN_W = 0;
       LASER_FOCUS_SHIFT_IN_MM = 1;
-      //for Q-Switch only
       LASER_PULSE_LENGTH_IN_US = 2;
       LASER_PULSE_REPITION_RATE_IN_HZ = 3;
+      LASER_SPEED_IN_MM_PER_S = 4;
     }
   }
   
   //A hatch divided into a line sequence with adaption parameter
+  //this vector block type saves significant amounts of vector block meta data
+  //compared to writing every hatch as its own LineSequenceParaAdapt block
   message HatchesParaAdapt {
     repeated LineSequenceParaAdapt hatchAsLinesequence = 1;
   }
